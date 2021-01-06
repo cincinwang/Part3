@@ -5,7 +5,8 @@ const morgan = require('morgan');
 
 app.use(express.json());
 
-app.use(morgan(":method :url :status :res[content-length] - :response-time ms"));
+app.use(morgan(":method :url :status :res[content-length] - :response-time ms :POST"));
+morgan.token("POST", (request, response)=>JSON.stringify(request.body));
 
 let persons=[
     {
