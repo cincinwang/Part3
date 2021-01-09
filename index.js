@@ -1,7 +1,10 @@
+require('dotenv').config();
 const express = require('express');
 const app = express();
 const morgan = require('morgan');
 const cors=require('cors');
+const Person = require('./models/person')
+// const mongoose = require('mongoose');
 
 
 app.use(cors());
@@ -10,6 +13,28 @@ app.use(express.json());
 
 app.use(morgan(":method :url :status :res[content-length] - :response-time ms :POST"));
 morgan.token("POST", (request, response)=>JSON.stringify(request.body));
+
+
+// const url =`mongodb+srv://fullstack:AAAA@cluster0.45d30.mongodb.net/person-app?retryWrites=true&w=majority`;
+//
+// mongoose.connect(url,{useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false, useCreateIndex: true});
+//
+// const personSchema = new mongoose.Schema({
+//     name: String,
+//     number: String,
+// });
+//
+// const Person = mongoose.model('Person', personSchema);
+
+//to remove id and __v that was shown in the person object
+// personSchema.set('toJSON', {
+//     transform: (document, returnedObject)=>{
+//         returnedObject.id = returnedObject._id.toString();
+//         delete returnedObject._id
+//         delete returnedObject.__v
+//     }
+// });
+
 
 let persons=[
     {
@@ -44,24 +69,41 @@ let persons=[
 // });
 
 app.get('/api/persons', (request,response)=>{
-    response.json(persons)
+    // response.json(persons)
+    // console.log(response);
+    Person.find({})
+        .then(persons =>{
+        response.json(persons)
+
+    })
 });
 
 app.get('/info', (request,response)=>{
     response.send(`Phonebook has info for ${persons.length} people <br> <P>${new Date()}</P>`)
 });
 
-app.get('/api/persons/:id', (request, response)=>{
-    const id = Number(request.params.id)
-    const person = persons.find(person=>person.id === id)
 
-    if(person){
+// using hardcoded data:
+// app.get('/api/persons/:id', (request, response)=>{
+//     const id = Number(request.params.id)
+//     const person = persons.find(person=>person.id === id)
+//
+//     if(person){
+//         response.json(person)
+//     }else{
+//         response.status(404).send(`404 Not Found`).end()
+//     }
+//
+// });
+
+
+//refactor the backend to use the database:
+app.get('/api/persons/:id', (request,response)=>{
+    Person.findById(request.params.id).then(person=> {
         response.json(person)
-    }else{
-        response.status(404).send(`404 Not Found`).end()
-    }
-
+    })
 });
+
 
 const generateId= ()=>{
     return Math.round(Math.random()*3000)
@@ -69,7 +111,7 @@ const generateId= ()=>{
 
 app.post('/api/persons',(request,response)=>{
     const body = request.body;
-    console.log(request);
+    // console.log(request);
      if(!body.name || !body.number){
          return response.status(400).json({
              error: 'name or number is missing'
@@ -81,26 +123,43 @@ app.post('/api/persons',(request,response)=>{
          })
      }
 
-     const person ={
-         name: body.name,
-         number: body.number,
-         id: generateId()
-     };
 
-     persons = persons.concat(person);
+     // const person ={
+     //     name: body.name,
+     //     number: body.number,
+     //     id: generateId()
+     // };
 
-     response.json(person)
+    //refactor the backend to use database
+    const person = new Person({
+        name: body.name,
+        number: body.number
+    })
+
+    person.save().then(savedPerson => {
+        response.json(savedPerson)
+    });
+
+     // persons = persons.concat(person);
+     //
+     // response.json(person)
 
 });
 
 app.delete('/api/persons/:id', (request,response)=>{
-    const id = Number(request.params.id);
-    persons = persons.filter(person => person.id !== id);
-    response.status(204).end()
+    // const id = Number(request.params.id);
+    // persons = persons.filter(person => person.id !== id);
+
+    //refactor backend to use database:
+    Person.findByIdAndDelete(request.params.id)
+        .then(result =>{response.status(204).end()})
+        .catch(error => next(error))
 });
 
 
-const PORT = process.env.PORT || 3001;
+// const PORT = process.env.PORT || 3001;
+//after adding PORT in .env:
+const PORT = process.env.PORT;
 app.listen(PORT,()=>{
     console.log(`Server is running on ${PORT}`)
 });
