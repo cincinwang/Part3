@@ -37,6 +37,10 @@ let persons=[
     }
 ];
 
+app.get('/', (request,response)=>{
+    return response.send("it's working!")
+});
+
 app.get('/api/persons', (request,response)=>{
     response.json(persons)
 });
