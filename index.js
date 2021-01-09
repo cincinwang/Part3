@@ -3,8 +3,10 @@ const app = express();
 const morgan = require('morgan');
 const cors=require('cors');
 
-app.use(express.json());
+
 app.use(cors());
+app.use(express.static('build'));
+app.use(express.json());
 
 app.use(morgan(":method :url :status :res[content-length] - :response-time ms :POST"));
 morgan.token("POST", (request, response)=>JSON.stringify(request.body));
@@ -37,9 +39,9 @@ let persons=[
     }
 ];
 
-app.get('/', (request,response)=>{
-    return response.send("it's working!")
-});
+// app.get('/', (request,response)=>{
+//     return response.send("it's working!")
+// });
 
 app.get('/api/persons', (request,response)=>{
     response.json(persons)
