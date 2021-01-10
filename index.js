@@ -122,14 +122,15 @@ app.get('/api/persons/:id', (request,response, next)=>{
 });
 
 
-const generateId= ()=>{
-    return Math.round(Math.random()*3000)
-};
+// const generateId= ()=>{
+//     return Math.round(Math.random()*3000)
+// };
 
-app.post('/api/persons',(request,response)=>{
+app.post('/api/persons',(request,response, next)=>{
     const body = request.body;
-    // console.log(request);
 
+    // console.log(request);
+    //
      if(!body.name || !body.number){
          return response.status(400).json({
              error: 'name or number is missing'
@@ -154,14 +155,15 @@ app.post('/api/persons',(request,response)=>{
         number: body.number
     })
 
-    person.save().then(savedPerson => {
-        response.json(savedPerson)
-    });
+    person.save()
+        .then(savedPerson=> {
+            response.json(savedPerson)
+        })
+        .catch(error=> next(error))
 
      // persons = persons.concat(person);
      //
      // response.json(person)
-
 });
 
 app.put('/api/persons/:id', (request,response,next)=>{
@@ -195,6 +197,10 @@ const errorHandler = (error, request, response, next)=>{
 
     if(error.name==='CastError'){
         return response.status(400).send({error:'malformatter id'})
+    }
+    //expand the error handler to deal with these validation errors
+    else if(error.name ==='ValidationError'){
+        return response.status(400).json({error: error.message})
     }
     next(error)
 };
